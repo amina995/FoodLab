@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link href="https://fonts.googleapis.com/css?family=Kanit:400,300&subset=thai,latin" rel="stylesheet" type="text/css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.5.1/dist/leaflet.css" integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ==" crossorigin="" />
+        <!-- Make sure you put this AFTER Leaflet's CSS -->
+        <script src="https://unpkg.com/leaflet@1.5.1/dist/leaflet.js" integrity="sha512-GffPMF3RvMeYyc1LWMHtK8EbPv0iNZ8/oTtHPx9/cc2ILxQ+u905qIwdpULaqDkyBKgOaB57QTMg7ztg8Jm2Og==" crossorigin=""></script>
+        <style type="text/css">
+            #slikaProizvoda {
+                width: 100%;
+            }
+
+            body {
+                padding: 0px;
+                margin: 0px;
+                background-color: #302e45;
+            }
+
+            #logoSmall {
+                margin-top: 5px;
+                margin-left: 10px;
+                width: 30%;
+            }
+            #top {
+                background: #2e2d42;
+                -webkit-box-shadow: 3px 3px 5px 1px #222131; /* Safari 3-4, iOS 4.0.2 - 4.2, Android 2.3+ */
+                -moz-box-shadow: 3px 3px 5px 1px #222131; /* Firefox 3.5 - 3.6 */
+                box-shadow: 3px 3px 5px 1px #222131;
+                overflow: hidden;
+                position: fixed; /* Set the navbar to fixed position */
+                top: 0; /* Position the navbar at the top of the page */
+                width: 100%; /* Full width */
+            }
+
+            #separator {
+                background: #2e2d42;
+                border-bottom: 1px solid #222131;
+                margin: 10px;
+                margin-top: 20px;
+                margin-bottom: 20px;
+            }
+
+            /**
+ * 1. The `reverse` animation direction plays the animation backwards
+ *    which makes it start at the stroke offset 100 which means displaying
+ *    no stroke at all and animating it to the value defined in the SVG
+ *    via the inline `stroke-dashoffset` attribute.
+ * 2. Rotate by -90 degree to make the starting point of the
+ *    stroke the top of the circle.
+ * 3. Using CSS transforms on SVG elements is not supported by Internet Explorer
+ *    and Edge, use the transform attribute directly on the SVG element as a
+ * .  workaround (https://markus.oberlehner.net/blog/pure-css-animated-svg-circle-chart/#part-4-internet-explorer-strikes-back).
+ */
+            .circle-chart__circle {
+                animation: circle-chart-fill 2s reverse; /* 1 */
+                transform: rotate(-90deg); /* 2, 3 */
+                transform-origin: center; /* 4 */
+            }
+
+            /**
+ * 1. Rotate by -90 degree to make the starting point of the
+ *    stroke the top of the circle.
+ * 2. Scaling mirrors the circle to make the stroke move right
+ *    to mark a positive chart value.
+ * 3. Using CSS transforms on SVG elements is not supported by Internet Explorer
+ *    and Edge, use the transform attribute directly on the SVG element as a
+ * .  workaround (https://markus.oberlehner.net/blog/pure-css-animated-svg-circle-chart/#part-4-internet-explorer-strikes-back).
+ */
+            .circle-chart__circle--negative {
+                transform: rotate(-90deg) scale(1, -1); /* 1, 2, 3 */
+            }
+
+            .circle-chart__info {
+                animation: circle-chart-appear 2s forwards;
+                opacity: 0;
+                transform: translateY(0.3em);
+            }
+
+            @keyframes circle-chart-fill {
+                to {
+                    stroke-dasharray: 0 100;
+                }
+            }
+
+            @keyframes circle-chart-appear {
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            /* Layout styles only, not needed for functionality */
+            html {
+                font-family: sans-serif;
+            }
+
+            .grid {
+                display: grid;
+                grid-column-gap: 1em;
+                grid-row-gap: 1em;
+                grid-template-columns: repeat(1, 1fr);
+            }
+
+            @media (min-width: 31em) {
+                .grid {
+                    grid-template-columns: repeat(2, 1fr);
+                }
+            }
+
+            .column,
+            .row {
+                box-sizing: border-box;
+            }
+
+            /* Create three equal columns that floats next to each other */
+            .column {
+                float: left;
+                width: 33.33%;
+                padding: 10px;
+                text-align: center;
+            }
+
+            /* Clear floats after the columns */
+            .row:after {
+                content: "";
+                display: table;
+                clear: both;
+            }
+
+            .category {
+                background: lightgray;
+                padding: 5px;
+                border-radius: 10px;
+            }
+
+            #naziv {
+                width: 95%;
+                margin: 10px;
+                margin-top: 20px;
+                background: #ad4b77;
+                border-radius: 10px;
+                padding: 10px;
+                font-family: "Kanit", sans-serif;
+                color: white;
+                clear: both;
+                margin-top: 70px;
+            }
+            #img {
+                width: 95%;
+                margin: 10px;
+                margin-top: 20px;
+                border-radius: 10px;
+                padding: 10px;
+                font-family: "Kanit", sans-serif;
+                color: white;
+                clear: both;
+                margin-top: 70px;
+            }
+            #sastav,
+            #info {
+                width: 88.5%;
+                margin: 10px;
+                margin-top: 20px;
+                background: #45425f;
+                border-radius: 10px;
+                padding: 10px;
+                font-family: "Kanit", sans-serif;
+                color: white;
+            }
+            .fa {
+                font-size: 30px;
+            }
+
+            #slika {
+                text-align: right;
+                font-size: 20px;
+                opacity: 0.5;
+            }
+
+            #ime {
+                width: 250px;
+                float: left;
+            }
+
+            hr {
+                border: 1px solid #22213147;
+            }
+
+            .column {
+                float: left;
+                width: 33.33%;
+                padding: 10px;
+            }
+
+            /* Clear floats after the columns */
+            .row:after {
+                content: "";
+                display: table;
+                clear: both;
+            }
+            h1 {
+                color: #7bebf8;
+            }
+
+            p {
+                color: white;
+                font-family: "Kanit", sans-serif;
+            }
+
+            .g {
+                color: white;
+                font-family: "Kanit", sans-serif;
+            }
+
+            #sastav,
+            #info {
+                display: none;
+            }
+
+            #mapid {
+                height: 230px;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="top">
+            <img id="logoSmall" src="logo foodlabb.png" />
+        </div>
+        <table id="naziv" id="top" border="0" cellspacing="0" cellpadding="0">
+            <tr>
+                <td><div id="ime"></div></td>
+                <td onclick="toggleImage()">
+                    <div id="slika"><i class="fa fa-picture-o"></i></div>
+                </td>
+            </tr>
+        </table>
+
+        <table border="0" cellspacing="0" cellpadding="0">
+            <tr>
+                <td><div id="image" style="display: none;"></div></td>
+            </tr>
+        </table>
+
+        <div id="map" style="display: none;">
+            <div id="mapid"></div>
+        </div>
+        <div id="separator"></div>
+        <div class="row">
+            <div class="column" onclick="show('sastav', 'info')">
+                <h1><i class="fa fa-list" aria-hidden="true"></i></h1>
+                <p>SASTAV</p>
+            </div>
+            <div class="column" onclick="show('info', 'sastav')">
+                <h1><i class="fa fa-question"></i></h1>
+                <p>INFO</p>
+            </div>
+            <div class="column">
+                <h1><i class="fa fa-map-marker" onclick="toggleMap()" aria-hidden="true"></i></h1>
+                <p>GDJE KUPITI?</p>
+            </div>
+        </div>
+        <div id="sastav">sastav</div>
+        <div id="info">info</div>
+        <div id="separator"></div>
+        <div class="row">
+            <div class="column">
+                <h1>
+                    <svg class="circle-chart" viewbox="0 0 33.83098862 33.83098862" width="105" height="105" xmlns="http://www.w3.org/2000/svg">
+                        <circle class="circle-chart__background" stroke="#efefef" stroke-width="4" fill="none" cx="16.91549431" cy="16.91549431" r="13.91549431" />
+                        <circle id="circle1" class="circle-chart__circle" stroke="#7bebf8" stroke-width="4" stroke-dasharray="42,100" stroke-linecap="round" fill="none" cx="16.91549431" cy="16.91549431" r="13.91549431" />
+                        <g class="circle-chart__info">
+                            <text id="glutenfreeSastav" class="circle-chart__percent" x="16.91549431" y="16.91549431" alignment-baseline="central" text-anchor="middle" font-size="8" fill="white"></text>
+                        </g>
+                    </svg>
+                </h1>
+                <p>GLUTEN-FREE</p>
+            </div>
+            <div class="column">
+                <h1>
+                    <svg class="circle-chart" viewbox="0 0 33.83098862 33.83098862" width="105" height="105" xmlns="http://www.w3.org/2000/svg">
+                        <circle class="circle-chart__background" stroke="#efefef" stroke-width="4" fill="none" cx="16.91549431" cy="16.91549431" r="13.91549431" />
+                        <circle id="circle2" class="circle-chart__circle" stroke="#7bebf8" stroke-width="4" stroke-dasharray="" stroke-linecap="round" fill="none" cx="16.91549431" cy="16.91549431" r="13.91549431" />
+                        <g class="circle-chart__info">
+                            <text id="halalSastav" class="circle-chart__percent" x="16.91549431" y="16.91549431" alignment-baseline="central" text-anchor="middle" font-size="8" fill="white"></text>
+                        </g>
+                    </svg>
+                </h1>
+                <p>HALAL</p>
+            </div>
+            <div class="column">
+                <h1>
+                    <svg class="circle-chart" viewbox="0 0 33.83098862 33.83098862" width="105" height="105" xmlns="http://www.w3.org/2000/svg">
+                        <circle class="circle-chart__background" stroke="#efefef" stroke-width="4" fill="none" cx="16.91549431" cy="16.91549431" r="13.91549431" />
+                        <circle id="circle3" class="circle-chart__circle" stroke="#ad4b77" stroke-width="4" stroke-dasharray="30,100" stroke-linecap="round" fill="none" cx="16.91549431" cy="16.91549431" r="13.91549431" />
+                        <g class="circle-chart__info">
+                            <text id="veganSastav" class="circle-chart__percent" x="16.91549431" y="16.91549431" alignment-baseline="central" text-anchor="middle" font-size="8" fill="white"></text>
+                        </g>
+                    </svg>
+                </h1>
+                <p>VEGAN</p>
+            </div>
+        </div>
+    </body>
+    <script type="text/javascript">
+        var url_string = window.location.href; //window.location.href
+        var url = new URL(url_string);
+        var c = url.searchParams.get("code");
+        // alert('ovo je iz ajaxDB' +c);
+
+        xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function () {
+            if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                var txt = xmlhttp.responseText;
+                document.getElementById("sastav").innerHTML = xmlhttp.responseText;
+            }
+        };
+        xmlhttp.open("GET", "https://try7.000webhostapp.com/sastav.php?i=0&code=" + c);
+        xmlhttp.send();
+
+        xmlhttp1 = new XMLHttpRequest();
+        xmlhttp1.onreadystatechange = function () {
+            if (xmlhttp1.readyState == 4 && xmlhttp1.status == 200) {
+                var txt = xmlhttp1.responseText;
+                document.getElementById("ime").innerHTML = xmlhttp1.responseText;
+            }
+        };
+        xmlhttp1.open("GET", "https://try7.000webhostapp.com/read.php?i=1&code=" + c);
+        xmlhttp1.send();
+
+        xmlhttp2 = new XMLHttpRequest();
+        xmlhttp2.onreadystatechange = function () {
+            if (xmlhttp2.readyState == 4 && xmlhttp2.status == 200) {
+                var txt = xmlhttp2.responseText;
+                document.getElementById("info").innerHTML = xmlhttp2.responseText;
+            }
+        };
+        xmlhttp2.open("GET", "https://try7.000webhostapp.com/read.php?i=2&code=" + c);
+        xmlhttp2.send();
+
+        xmlhttp3 = new XMLHttpRequest();
+        xmlhttp3.onreadystatechange = function () {
+            if (xmlhttp3.readyState == 4 && xmlhttp3.status == 200) {
+                var txt = xmlhttp3.responseText;
+                document.getElementById("image").innerHTML = xmlhttp3.responseText;
+            }
+        };
+        xmlhttp3.open("GET", "https://try7.000webhostapp.com/read.php?i=3&code=" + c);
+        xmlhttp3.send();
+
+        xmlhttp4 = new XMLHttpRequest();
+        xmlhttp4.onreadystatechange = function () {
+            if (xmlhttp4.readyState == 4 && xmlhttp4.status == 200) {
+                var txt = xmlhttp4.responseText;
+                document.getElementById("glutenfreeSastav").innerHTML = xmlhttp4.responseText + "%";
+                var element = document.getElementById("circle1");
+                if (parseInt(xmlhttp4.responseText) != 0) {
+                    element.style.strokeDasharray = parseInt(xmlhttp4.responseText);
+                    element.style.strokeDasharray = element.style.strokeDasharray + ",100";
+                } else element.style.strokeDasharray = "0,100";
+            }
+        };
+        xmlhttp4.open("GET", "https://try7.000webhostapp.com/sastav.php?i=1&code=" + c);
+        xmlhttp4.send();
+
+        xmlhttp5 = new XMLHttpRequest();
+        xmlhttp5.onreadystatechange = function () {
+            if (xmlhttp5.readyState == 4 && xmlhttp5.status == 200) {
+                var txt = xmlhttp5.responseText;
+                document.getElementById("halalSastav").innerHTML = xmlhttp5.responseText + "%";
+                var element = document.getElementById("circle2");
+                if (parseInt(xmlhttp5.responseText) != 0) {
+                    element.style.strokeDasharray = parseInt(xmlhttp5.responseText) - 7;
+                    element.style.strokeDasharray = element.style.strokeDasharray + ",100";
+                } else element.style.strokeDasharray = "0,100";
+            }
+        };
+        xmlhttp5.open("GET", "https://try7.000webhostapp.com/sastav.php?i=2&code=" + c);
+        xmlhttp5.send();
+
+        xmlhttp6 = new XMLHttpRequest();
+        xmlhttp6.onreadystatechange = function () {
+            if (xmlhttp6.readyState == 4 && xmlhttp6.status == 200) {
+                var txt = xmlhttp6.responseText;
+                document.getElementById("veganSastav").innerHTML = xmlhttp6.responseText + "%";
+                var element = document.getElementById("circle3");
+                if (parseInt(xmlhttp6.responseText) != 0) {
+                    element.style.strokeDasharray = parseInt(xmlhttp6.responseText) - 7;
+                    element.style.strokeDasharray = element.style.strokeDasharray + ",100";
+                } else element.style.strokeDasharray = "0,100";
+            }
+        };
+        xmlhttp6.open("GET", "https://try7.000webhostapp.com/sastav.php?i=3&code=" + c);
+        xmlhttp6.send();
+
+        function show(show, hide) {
+            document.getElementById(show).style.display = "block";
+            document.getElementById(hide).style.display = "none";
+        }
+
+        function toggleImage() {
+            var x = document.getElementById("image");
+            if (x.style.display === "none") {
+                x.style.display = "block";
+            } else {
+                x.style.display = "none";
+            }
+        }
+
+        function toggleMap() {
+            var x = document.getElementById("map");
+            if (x.style.display === "none") {
+                x.style.display = "block";
+            } else {
+                x.style.display = "none";
+            }
+
+            var mymap = L.map("mapid").setView([43.84864, 18.35644], 11);
+            L.tileLayer("https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}", {
+                attribution:
+                    'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+                maxZoom: 18,
+                id: "mapbox.streets",
+                accessToken: "pk.eyJ1IjoiYW1pbmE5OTUiLCJhIjoiY2p5aXJ3djlzMDJraDNubnh1c2c3Y3Y3biJ9.fRcg6aJkRhI_iAusD6Kjjg",
+            }).addTo(mymap);
+            var marker = L.marker([43.84864, 18.35644], {
+                draggable: true,
+                title: "Resource location",
+                alt: "Resource Location",
+                riseOnHover: true,
+            })
+                .addTo(mymap)
+                .bindPopup("Bingo TC")
+                .openPopup();
+
+            var marker = L.marker([43.84884, 18.35694], {
+                draggable: true,
+                title: "Resource location",
+                alt: "Resource Location",
+                riseOnHover: true,
+            })
+                .addTo(mymap)
+                .bindPopup("Konzum")
+                .openPopup();
+        }
+    </script>
+</html>
